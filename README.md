@@ -97,7 +97,7 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 ```cpp
 #include <iostream>
-#include "websocket/websocket_rails.hpp"
+#include "websocket-rails-client/websocket_rails.hpp"
 ```
 
 * Callback definitions
