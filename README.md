@@ -29,42 +29,42 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Connection
 
- * connect(std::string url)    : Start connection of the client.
- * disconnect() : Disconnect client.
- * reconnect()  : Re-connect the client with all registered channels.
+ * ```connect(std::string url)```    : Start connection of the client.
+ * ```disconnect()``` : Disconnect client.
+ * ```reconnect()```  : Re-connect the client with all registered channels.
 
 #### Connection Callbacks
 
- * on_open(boost::bind cb)  : callback on open connection.
- * on_close(boost::bind cb) : callback on close connection.
- * on_fail(boost::bind cb)  : callback on fail connection.
+ * ```on_open(boost::bind cb)```  : callback on open connection.
+ * ```on_close(boost::bind cb)``` : callback on close connection.
+ * ```on_fail(boost::bind cb)```  : callback on fail connection.
 
 #### Trigger an Event on Server
 
-* trigger(std::string event_name, jsonxx::Object event_data) : trigger event with data without callback.
-* trigger(std::string event_name, jsonxx::Object event_data, boost::bind cb_succ, boost::bind cb_fail) : trigger event with data and callbacks.
+* ```trigger(std::string event_name, jsonxx::Object event_data)``` : trigger event with data without callback.
+* ```trigger(std::string event_name, jsonxx::Object event_data, boost::bind cb_succ, boost::bind cb_fail)``` : trigger event with data and callbacks.
 
 #### Bind to an Incoming Event
 
-* bind(std::string event_name, boost::bind cb) : Bind to an event with callback.
+* ```bind(std::string event_name, boost::bind cb)``` : Bind to an event with callback.
 
 
 ### Channel Event Dispatcher
 
 #### Channel Management
 
-* subscribe(std::string channel_name) : Subscribe to a channel.
-* subscribePrivate(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail) : Subscribe to a private channel.
-* unsubscribe(std::string channel_name) : Unsubscribe a channel.
+* ```subscribe(std::string channel_name)``` : Subscribe to a channel.
+* ```subscribePrivate(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail)``` : Subscribe to a private channel.
+* ```unsubscribe(std::string channel_name)``` : Unsubscribe a channel.
 
 #### Trigger a Channel-Event on Server
 
-* trigger(std::string event_name, jsonxx::Object event_data) : trigger channel event with data without callback.
-* trigger(std::string event_name, jsonxx::Object event_data, boost::bind cb_succ, boost::bind cb_fail) : trigger channel event with data and callbacks.
+* ```trigger(std::string event_name, jsonxx::Object event_data)``` : trigger channel event with data without callback.
+* ```trigger(std::string event_name, jsonxx::Object event_data, boost::bind cb_succ, boost::bind cb_fail)``` : trigger channel event with data and callbacks.
 
 #### Bind to an Incoming Channel-Event
 
-* bind(std::string event_name, boost::bind cb) : Bind to a channel event with callback.
+* ```bind(std::string event_name, boost::bind cb)``` : Bind to a channel event with callback.
 
 ## Compile
 
@@ -72,23 +72,23 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Linker Flag -l
 
-* Booost libraries: boost_systen, boost_thread
-* System libraries: pthread, rt
-* TSL libraries: ssl, crypto
+* **Booost libraries:** boost_systen, boost_thread
+* **System libraries:** pthread, rt
+* **TSL libraries:** ssl, crypto
 
 ### C++ Compiler
 
 #### Compiler Flag -D
 
-* -D_WEBSOCKETPP_CPP11_STL_
+* ```-D_WEBSOCKETPP_CPP11_STL_```
 
 #### Compiler Flag -I
 
-* -I"/includes"
+* ```-I"/path/to/includes"```
 
 #### Compiler Flag -std
 
-* -std=c++0x
+* ```-std=c++0x```
 
 
 ## Usage
