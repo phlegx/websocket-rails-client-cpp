@@ -44,8 +44,10 @@
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/thread.hpp>
 
+#define TIMEOUT_CONN 30
+
 typedef boost::function<void(jsonxx::Object)> cb_func;
 typedef std::vector<boost::function<void(jsonxx::Object)> > vec_cb_func;
 typedef std::tr1::unordered_map<std::string, vec_cb_func> map_vec_cb_func;
 
-#endif /* WEBSOCKET_RAILS_HPP_ */
+#endif /* WEBSOCKET_HPP_ */

@@ -56,6 +56,7 @@ public:
   std::string getState();
   std::string setState(std::string state);
   WebsocketConnection * getConn();
+  bool isConnected();
 
   /**
    *  Connection callbacks

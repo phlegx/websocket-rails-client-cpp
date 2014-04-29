@@ -42,9 +42,14 @@ std::string WebsocketRails::connect() {
   this->state = "connecting";
   this->conn = new WebsocketConnection(this->url, *this);
   this->websocket_connection_thread = boost::thread(&WebsocketConnection::run, this->conn);
+  int count = 0;
   while(this->connectionStale()) {
     boost::posix_time::seconds workTime(1);
     boost::this_thread::sleep(workTime);
+    count++;
+    if(count == TIMEOUT_CONN) {
+      return this->disconnect();
+    }
   }
   return this->state;
 }
@@ -56,22 +61,23 @@ std::string WebsocketRails::disconnect() {
     this->websocket_connection_thread.join();
     delete this->conn;
   }
-  return this->state;
+  return this->state = "disconnected";
 }
 
 
 WebsocketRails::connection WebsocketRails::reconnect() {
+  connection conn_struct;
   std::string oldconnection_id = this->conn != 0 ? this->conn->getConnectionId() : "";
   this->disconnect();
-  this->connect();
-  for (auto& x: this->queue) {
-      Event event = x.second;
-      if(event.getConnectionId() == oldconnection_id && !event.isResult()) {
-        this->triggerEvent(event);
-      }
+  if(this->connect() == "connected") {
+    for(auto& x: this->queue) {
+        Event event = x.second;
+        if(event.getConnectionId() == oldconnection_id && !event.isResult()) {
+          this->triggerEvent(event);
+        }
+    }
+    conn_struct.channels = this->reconnectChannels(); 
   }
-  connection conn_struct;
-  conn_struct.channels = this->reconnectChannels();
   conn_struct.state = this->state;
   return conn_struct;
 }
@@ -92,6 +98,11 @@ std::string WebsocketRails::setState(std::string state) {
 /* Get Connection Object */
 WebsocketConnection * WebsocketRails::getConn() {
   return this->conn;
+}
+
+
+bool WebsocketRails::isConnected() {
+  return !this->connectionStale();
 }
 
 
