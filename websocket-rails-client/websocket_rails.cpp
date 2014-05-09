@@ -206,7 +206,7 @@ Event WebsocketRails::triggerEvent(Event event) {
  ************************************/
 
 Channel WebsocketRails::subscribe(std::string channel_name) {
-  if (this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channels.find(channel_name) == this->channels.end()) {
     Channel channel(channel_name, *this, false);
     this->channels[channel_name] = channel;
     return channel;
@@ -217,7 +217,7 @@ Channel WebsocketRails::subscribe(std::string channel_name) {
 
 
 Channel WebsocketRails::subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
-  if (this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channels.find(channel_name) == this->channels.end()) {
     Channel channel(channel_name, *this, false, success_callback, failure_callback);
     this->channels[channel_name] = channel;
     return channel;

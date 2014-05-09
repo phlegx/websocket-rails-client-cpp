@@ -194,6 +194,13 @@ boost::bind(bind_func_with_params, _1, 123, param2);
 To authenticate a user a separate C++ HTTP client library is required.
 
 
+## TODO
+
+* Add timestamp to events so that it is possible to clean the events queue with old events without response.
+* Implement a clean-up method for the queue.
+* See how to persist the connection object (```this->conn```) in the dispatcher so that the function ```trigger()``` can put the event trigger in event_queue if disconnected.
+
+
 ## Author
 
 Egon Zemmer, Phlegx Systems - @phlegx

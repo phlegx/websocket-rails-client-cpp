@@ -181,7 +181,7 @@ void WebsocketConnection::messageHandler(websocketpp::connection_hdl hdl, messag
 
 
 void WebsocketConnection::sendEvent(Event event) {
-  if(this->connection_id != "0") {
+  if(this->connection_id != "") {
     event.setConnectionId(this->connection_id);
   }
   websocketpp::lib::error_code ec;

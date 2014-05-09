@@ -87,20 +87,6 @@ Event Channel::trigger(std::string event_name, jsonxx::Object event_data) {
   }
 }
 
-Event Channel::trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback) {
-  jsonxx::Array data = this->initEventData(event_name);
-  data.get<jsonxx::Object>(1).import("channel", this->name);
-  data.get<jsonxx::Object>(1).import("data", event_data);
-  data.get<jsonxx::Object>(1).import("token", this->token);
-  Event event(data, success_callback, failure_callback);
-  if(this->token.empty()) {
-    this->event_queue.push(event);
-    return event;
-  } else {
-    return this->dispatcher->triggerEvent(event);
-  }
-}
-
 
 std::string Channel::getName() {
   return this->name;

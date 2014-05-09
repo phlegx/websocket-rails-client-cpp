@@ -46,7 +46,6 @@ public:
   void destroy();
   void bind(std::string event_name, cb_func callback);
   Event trigger(std::string event_name, jsonxx::Object event_data);
-  Event trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback);
   std::string getName();
   map_vec_cb_func getCallbacks();
   void setCallbacks(map_vec_cb_func callbacks);
