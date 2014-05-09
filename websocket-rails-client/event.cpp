@@ -75,9 +75,11 @@ std::string Event::serialize() {
 
 void Event::runCallbacks(bool success, jsonxx::Object event_data) {
   if(success) {
-    this->success_callback(event_data);
+    if(this->success_callback)
+      this->success_callback(event_data);
   } else {
-    this->failure_callback(event_data);
+    if(this->failure_callback)
+      this->failure_callback(event_data);
   }
 }
 
