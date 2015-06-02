@@ -43,7 +43,7 @@ std::string WebsocketRails::connect() {
   this->conn = new WebsocketConnection(this->url, *this);
   this->websocket_connection_thread = boost::thread(&WebsocketConnection::run, this->conn);
   int count = 0;
-  while(this->connectionStale()) {
+  while(!this->isConnected()) {
     boost::posix_time::seconds workTime(1);
     boost::this_thread::sleep(workTime);
     count++;
@@ -57,7 +57,9 @@ std::string WebsocketRails::connect() {
 
 std::string WebsocketRails::disconnect() {
   if(this->conn != 0) {
-    this->conn->close();
+    if(this->isConnected()) {
+      this->conn->close();
+    }
     this->websocket_connection_thread.join();
     delete this->conn;
   }
