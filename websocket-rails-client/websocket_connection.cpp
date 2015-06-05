@@ -111,7 +111,9 @@ std::string WebsocketConnection::getConnectionId() {
 /* Flush all events in queue */
 std::queue<Event> WebsocketConnection::flushQueue() {
   while(!this->event_queue.empty()) {
-    this->trigger(this->event_queue.front());
+    Event event = this->event_queue.front();
+    this->trigger(event);
+    this->event_queue.pop();
   }
   std::swap(this->event_queue, this->empty);
   return this->event_queue;
