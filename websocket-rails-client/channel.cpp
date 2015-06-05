@@ -172,7 +172,9 @@ void Channel::failureLauncher(jsonxx::Object data) {
 
 std::queue<Event> Channel::flush_queue() {
   while(!this->event_queue.empty()) {
-    this->dispatcher->triggerEvent(this->event_queue.front());
+    Event event = this->event_queue.front();
+    this->dispatcher->triggerEvent(event);
+    this->event_queue.pop();
   }
   std::swap(this->event_queue, this->empty);
   return this->event_queue;
