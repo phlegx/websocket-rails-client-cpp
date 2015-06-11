@@ -314,12 +314,12 @@ std::vector<Channel> WebsocketRails::reconnectChannels() {
   std::vector<Channel> results;
   for (auto& x: this->channels) {
     Channel channel = x.second;
-    callbacks = channel.getCallbacks();
+    this->callbacks = channel.getCallbacks();
     channel.destroy();
     std::string channel_name = channel.getName();
     this->channels.erase(channel_name);
     channel = channel.isPrivate() ? this->subscribePrivate(channel_name) : this->subscribe(channel_name);
-    channel.setCallbacks(callbacks);
+    channel.setCallbacks(this->callbacks);
     results.push_back(channel);
   }
   return results;
