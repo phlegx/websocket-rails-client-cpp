@@ -69,10 +69,6 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 * ```bind(std::string event_name, boost::bind cb)``` : Bind to a channel event with callback.
 
-#### Unbind an Incoming Channel-Event
-
-* ```unbindAll(std::string event_name)``` : Unbind all callbacks on a specific event name.
-
 ## Compile
 
 ### C++ Linker
@@ -142,7 +138,7 @@ dispatcher.onFail(boost::bind(on_fail, _1));
 dispatcher.connect();
 ```
 
-* Bind and unbind events to callbacks
+* Bind events to callbacks
 
 ```cpp
 /* Event bind callback definition */
@@ -151,10 +147,10 @@ dispatcher.bind("users.pool", boost::bind(callback, _1));
 /* Event bind callback definition with member function callback */
 Foo my_foo;
 Event event3 = dispatcher.bind("users.pool", boost::bind(&Foo::success_func, my_foo, _1));
+```
 
 /* Event unbind callback definition */
 dispatcher.unbindAll("users.pool");
-```
 
 * Trigger events
 
@@ -178,7 +174,7 @@ Channel private_channel1 = dispatcher.subscribePrivate("Administrators");
 Channel private_channel2 = dispatcher.subscribePrivate("Moderators", boost::bind(success_func, _1), boost::bind(failure_func, _1));
 ```
 
-* Trigger, bind and unbind channel-events
+* Trigger and bind channel-events
 
 ```cpp
 /* Trigger an event on channel */
@@ -187,9 +183,6 @@ Event event = channel2.trigger("users.create", jsonxx::Object("name", "Frau Must
 
 /* Channel event bind callback definition */
 channel1.bind("users.pool", boost::bind(callback, _1));
-
-/* Event unbind callback definition */
-channel1.unbindAll("users.pool");
 ```
 
 * Callback additional parameters
