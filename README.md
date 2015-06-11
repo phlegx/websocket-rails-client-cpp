@@ -1,4 +1,4 @@
-# WebsocketRailsClient++ (v0.7.0)
+# WebsocketRailsClient++ (v0.7.1)
 
 WebsocketRailsClient++ is a C++ library that uses the implementation of RFC6455 (The WebSocket Protocol)
 implemented in the WebSocket++ library, the Json++ light-weight JSON parser and the Boost library. It allows
@@ -217,7 +217,7 @@ Egon Zemmer, Phlegx Systems - @phlegx
 ```
 The MIT License (http://opensource.org/licenses/MIT)
 
-Copyright (C) 2014 Egon Zemmer, Phlegx Systems
+Copyright (C) 2015 Egon Zemmer, Phlegx Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
