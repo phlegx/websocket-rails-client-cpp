@@ -73,9 +73,10 @@ public:
    *  Event functions
    **/
   void bind(std::string event_name, cb_func callback);
-  Event trigger(std::string event_name, jsonxx::Object event_data);
-  Event trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback);
-  Event triggerEvent(Event event);
+  void unbindAll(std::string event_name);
+  void trigger(std::string event_name, jsonxx::Object event_data);
+  void trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback);
+  void triggerEvent(Event event);
 
   /**
    *  Channel functions
@@ -97,9 +98,9 @@ private:
   cb_func on_open_callback;
   cb_func on_close_callback;
   cb_func on_fail_callback;
-  map_vec_cb_func callbacks; 	 																	  /* Map<key,value>: Event Name, Callback Array 		*/
-  std::tr1::unordered_map<std::string, Channel> channels; 				/* Map<key,value>: Channel Name, Channel Object 	*/
-  std::tr1::unordered_map<std::string, Event> queue; 							/* Map<key,value>: Event UUID, Event Object				*/
+  map_vec_cb_func callbacks;                                        /* Map<key,value>: Event Name, Callback Array     */
+  std::tr1::unordered_map<std::string, Channel> channels;         /* Map<key,value>: Channel Name, Channel Object   */
+  std::tr1::unordered_map<std::string, Event> queue;               /* Map<key,value>: Event UUID, Event Object        */
   WebsocketConnection * conn;
 
   /**

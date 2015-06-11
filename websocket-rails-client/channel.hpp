@@ -45,7 +45,9 @@ public:
    **/
   void destroy();
   void bind(std::string event_name, cb_func callback);
-  Event trigger(std::string event_name, jsonxx::Object event_data);
+  void unbindAll(std::string event_name);
+  void trigger(std::string event_name, jsonxx::Object event_data);
+  void trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback);
   std::string getName();
   map_vec_cb_func getCallbacks();
   void setCallbacks(map_vec_cb_func callbacks);
@@ -63,7 +65,7 @@ private:
   std::string token;
   cb_func on_success;
   cb_func on_failure;
-  map_vec_cb_func callbacks; 	    /* Map<key,value>: Event Name, Callback Array */
+  map_vec_cb_func callbacks;       /* Map<key,value>: Event Name, Callback Array */
   std::queue<Event> empty;
   std::queue<Event> event_queue;
   WebsocketRails * dispatcher;

@@ -73,7 +73,14 @@ void Channel::bind(std::string event_name, cb_func callback) {
 }
 
 
-Event Channel::trigger(std::string event_name, jsonxx::Object event_data) {
+void Channel::unbindAll(std::string event_name) {
+  if(this->callbacks.find(event_name) != this->callbacks.end()) {
+    this->callbacks.erase(event_name);
+  }
+}
+
+
+void Channel::trigger(std::string event_name, jsonxx::Object event_data) {
   jsonxx::Array data = this->initEventData(event_name);
   data.get<jsonxx::Object>(1).import("channel", this->name);
   data.get<jsonxx::Object>(1).import("data", event_data);
@@ -81,9 +88,21 @@ Event Channel::trigger(std::string event_name, jsonxx::Object event_data) {
   Event event(data);
   if(this->token.empty()) {
     this->event_queue.push(event);
-    return event;
   } else {
-    return this->dispatcher->triggerEvent(event);
+    this->dispatcher->triggerEvent(event);
+  }
+}
+
+void Channel::trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback) {
+  jsonxx::Array data = this->initEventData(event_name);
+  data.get<jsonxx::Object>(1).import("channel", this->name);
+  data.get<jsonxx::Object>(1).import("data", event_data);
+  data.get<jsonxx::Object>(1).import("token", this->token);
+  Event event(data, success_callback, failure_callback);
+  if(this->token.empty()) {
+    this->event_queue.push(event);
+  } else {
+    this->dispatcher->triggerEvent(event);
   }
 }
 

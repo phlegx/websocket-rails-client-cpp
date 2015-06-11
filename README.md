@@ -46,8 +46,11 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Bind to an Incoming Event
 
-* ```bind(std::string event_name, boost::bind cb)``` : Bind to an event with callback.
+* ```bind(std::string event_name, boost::bind cb)``` : Bind to an event name with callback.
 
+#### Unbind an Incoming Event
+
+* ```unbindAll(std::string event_name)``` : Unbind all callbacks on a specific event name.
 
 ### Channel Event Dispatcher
 
@@ -72,7 +75,7 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Linker Flag -l
 
-* **Booost libraries:** boost_systen, boost_thread
+* **Booost libraries:** boost_system, boost_thread
 * **System libraries:** pthread, rt
 * **TSL libraries:** ssl, crypto
 
@@ -145,6 +148,9 @@ dispatcher.bind("users.pool", boost::bind(callback, _1));
 Foo my_foo;
 Event event3 = dispatcher.bind("users.pool", boost::bind(&Foo::success_func, my_foo, _1));
 ```
+
+/* Event unbind callback definition */
+dispatcher.unbindAll("users.pool");
 
 * Trigger events
 

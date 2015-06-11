@@ -78,7 +78,7 @@ WebsocketRails::connection WebsocketRails::reconnect() {
           this->triggerEvent(event);
         }
     }
-    conn_struct.channels = this->reconnectChannels(); 
+    conn_struct.channels = this->reconnectChannels();
   }
   conn_struct.state = this->state;
   return conn_struct;
@@ -175,30 +175,36 @@ void WebsocketRails::bind(std::string event_name, cb_func callback) {
 }
 
 
-Event WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data) {
+void WebsocketRails::unbindAll(std::string event_name) {
+  if(this->callbacks.find(event_name) != this->callbacks.end()) {
+    this->callbacks.erase(event_name);
+  }
+}
+
+
+void WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data) {
   jsonxx::Array data;
   data << event_name << event_data << (this->conn != 0 ? this->conn->getConnectionId() : "");
   Event event(data);
-  return this->triggerEvent(event);
+  this->triggerEvent(event);
 }
 
 
-Event WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback) {
+void WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback) {
   jsonxx::Array data;
   data << event_name << event_data << (this->conn != 0 ? this->conn->getConnectionId() : "");
   Event event(data, success_callback, failure_callback);
-  return this->triggerEvent(event);
+  this->triggerEvent(event);
 }
 
 
-Event WebsocketRails::triggerEvent(Event event) {
+void WebsocketRails::triggerEvent(Event event) {
   if(this->queue.find(event.getId()) == this->queue.end()) {
     this->queue[event.getId()] = event;
   }
   if(this->conn != 0) {
     this->conn->trigger(event);
   }
-  return event;
 }
 
 

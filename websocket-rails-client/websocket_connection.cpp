@@ -174,8 +174,10 @@ void WebsocketConnection::messageHandler(websocketpp::connection_hdl hdl, messag
   for(int i = 0, len = event_data.size(); i < len; i++) {
     event_names += event_data.get<jsonxx::Array>(i).get<jsonxx::String>(0) + " ";
   }
-  this->ws_client.get_alog().write(websocketpp::log::alevel::app,
-  "Message arrived: " + event_names);
+  if(event_names != "websocket_rails.ping ") {
+    this->ws_client.get_alog().write(websocketpp::log::alevel::app,
+    "Message arrived: " + event_names);
+  }
   if(this->dispatcher && this->dispatcher->getConn() == this) {
     this->dispatcher->newMessage(event_data);
   }
