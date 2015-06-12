@@ -123,7 +123,7 @@ void Channel::setCallbacks(map_vec_cb_func callbacks) {
 
 
 bool Channel::isPrivate() {
-  return this->isPrivate();
+  return this->is_private;
 }
 
 

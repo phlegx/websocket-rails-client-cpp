@@ -318,7 +318,7 @@ bool WebsocketRails::connectionStale() {
 
 std::vector<Channel> WebsocketRails::reconnectChannels() {
   std::vector<Channel> results;
-  for (auto& x: this->channel_queue) {
+  for(auto& x: this->channel_queue) {
     Channel channel = x.second;
     map_vec_cb_func callbacks = channel.getCallbacks();
     channel.destroy();
