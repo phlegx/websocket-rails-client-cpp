@@ -72,7 +72,7 @@ WebsocketRails::connection WebsocketRails::reconnect() {
   std::string oldconnection_id = this->conn != 0 ? this->conn->getConnectionId() : "";
   this->disconnect();
   if(this->connect() == "connected") {
-    for(auto& x: this->queue) {
+    for(auto& x: this->event_queue) {
         Event event = x.second;
         if(event.getConnectionId() == oldconnection_id && !event.isResult()) {
           this->triggerEvent(event);
@@ -118,10 +118,10 @@ void WebsocketRails::newMessage(jsonxx::Array data) {
     jsonxx::Array socket_message = data.get<jsonxx::Array>(_i);
     Event event(socket_message);
     if(event.isResult()) {
-      if(this->queue.find(event.getId()) != this->queue.end()) {
-        this->queue[event.getId()].runCallbacks(event.getSuccess(), event.getData());
+      if(this->event_queue.find(event.getId()) != this->event_queue.end()) {
+        this->event_queue[event.getId()].runCallbacks(event.getSuccess(), event.getData());
       }
-      this->queue.erase(event.getId());
+      this->event_queue.erase(event.getId());
     } else if(event.isChannel()) {
       this->dispatchChannel(event);
     } else if(event.isPing()) {
@@ -199,8 +199,8 @@ void WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data, 
 
 
 void WebsocketRails::triggerEvent(Event event) {
-  if(this->queue.find(event.getId()) == this->queue.end()) {
-    this->queue[event.getId()] = event;
+  if(this->event_queue.find(event.getId()) == this->event_queue.end()) {
+    this->event_queue[event.getId()] = event;
   }
   if(this->conn != 0) {
     this->conn->trigger(event);
@@ -214,55 +214,55 @@ void WebsocketRails::triggerEvent(Event event) {
  ************************************/
 
 Channel WebsocketRails::subscribe(std::string channel_name) {
-  if(this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, false);
-    this->channels[channel_name] = channel;
+    this->channel_queue[channel_name] = channel;
     return channel;
   } else {
-    return this->channels[channel_name];
+    return this->channel_queue[channel_name];
   }
 }
 
 
 Channel WebsocketRails::subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
-  if(this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, false, success_callback, failure_callback);
-    this->channels[channel_name] = channel;
+    this->channel_queue[channel_name] = channel;
     return channel;
   } else {
-    return this->channels[channel_name];
+    return this->channel_queue[channel_name];
   }
 }
 
 
 Channel WebsocketRails::subscribePrivate(std::string channel_name) {
-  if(this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, true);
-    this->channels[channel_name] = channel;
+    this->channel_queue[channel_name] = channel;
     return channel;
   } else {
-    return this->channels[channel_name];
+    return this->channel_queue[channel_name];
   }
 }
 
 
 Channel WebsocketRails::subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
-  if(this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, true, success_callback, failure_callback);
-    this->channels[channel_name] = channel;
+    this->channel_queue[channel_name] = channel;
     return channel;
   } else {
-    return this->channels[channel_name];
+    return this->channel_queue[channel_name];
   }
 }
 
 
 void WebsocketRails::unsubscribe(std::string channel_name) {
-  if(this->channels.find(channel_name) == this->channels.end()) {
+  if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     return;
   }
-  this->channels[channel_name].destroy();
-  this->channels.erase(channel_name);
+  this->channel_queue[channel_name].destroy();
+  this->channel_queue.erase(channel_name);
 }
 
 
@@ -296,10 +296,10 @@ void WebsocketRails::dispatch(Event event) {
 
 
 void WebsocketRails::dispatchChannel(Event event) {
-  if(this->channels.find(event.getChannel()) == this->channels.end()) {
+  if(this->channel_queue.find(event.getChannel()) == this->channel_queue.end()) {
     return;
   }
-  this->channels[event.getChannel()].dispatch(event.getName(), event.getData());
+  this->channel_queue[event.getChannel()].dispatch(event.getName(), event.getData());
 }
 
 
@@ -318,14 +318,14 @@ bool WebsocketRails::connectionStale() {
 
 std::vector<Channel> WebsocketRails::reconnectChannels() {
   std::vector<Channel> results;
-  for (auto& x: this->channels) {
+  for (auto& x: this->channel_queue) {
     Channel channel = x.second;
-    this->callbacks = channel.getCallbacks();
+    map_vec_cb_func callbacks = channel.getCallbacks();
     channel.destroy();
     std::string channel_name = channel.getName();
-    this->channels.erase(channel_name);
+    this->channel_queue.erase(channel_name);
     channel = channel.isPrivate() ? this->subscribePrivate(channel_name) : this->subscribe(channel_name);
-    channel.setCallbacks(this->callbacks);
+    channel.setCallbacks(callbacks);
     results.push_back(channel);
   }
   return results;
