@@ -1,7 +1,7 @@
 /**
  *
  * Name        : event.hpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : Event Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems

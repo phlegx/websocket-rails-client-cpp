@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket.cpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : WebsocketConnection Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
