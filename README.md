@@ -57,8 +57,9 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 #### Channel Management
 
 * ```subscribe(std::string channel_name)``` : Subscribe to a channel.
-* ```subscribePrivate(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail)``` : Subscribe to a private channel.
+* ```subscribePrivate(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail)``` : Subscribe to a private channel with callbacks.
 * ```unsubscribe(std::string channel_name)``` : Unsubscribe a channel.
+* ```unsubscribe(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail)``` : Unsubscribe a private channel with callbacks.
 
 #### Trigger a Channel-Event on Server
 
@@ -79,7 +80,7 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Linker Flag -l
 
-* **Booost libraries:** boost_system, boost_thread
+* **Boost libraries:** boost_system, boost_thread
 * **System libraries:** pthread, rt
 * **TSL libraries:** ssl, crypto
 
@@ -95,7 +96,7 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Compiler Flag -std
 
-* ```-std=c++0x```
+* ```-std=c++11```
 
 
 ## Usage
@@ -176,6 +177,10 @@ Channel channel1 = dispatcher.subscribe("Authors");
 Channel channel2 = dispatcher.subscribe("Users", boost::bind(success_func, _1), boost::bind(failure_func, _1));
 Channel private_channel1 = dispatcher.subscribePrivate("Administrators");
 Channel private_channel2 = dispatcher.subscribePrivate("Moderators", boost::bind(success_func, _1), boost::bind(failure_func, _1));
+
+/* Unsubscribe channels */
+dispatcher.unsubscribe("Authors");
+dispatcher.unsubscribe("Users", boost::bind(success_func, _1), boost::bind(failure_func, _1));
 ```
 
 * Trigger, bind and unbind channel-events
@@ -237,3 +242,4 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTH
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ```
+
