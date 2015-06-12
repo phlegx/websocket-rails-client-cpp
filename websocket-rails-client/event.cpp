@@ -1,7 +1,7 @@
 /**
  *
  * Name        : event.cpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : Event Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -75,11 +75,13 @@ std::string Event::serialize() {
 
 void Event::runCallbacks(bool success, jsonxx::Object event_data) {
   if(success) {
-    if(this->success_callback)
+    if(this->success_callback) {
       this->success_callback(event_data);
+    }
   } else {
-    if(this->failure_callback)
+    if(this->failure_callback) {
       this->failure_callback(event_data);
+    }
   }
 }
 

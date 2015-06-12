@@ -1,7 +1,7 @@
 /**
  *
  * Name        : channel.cpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : Channel Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -53,11 +53,11 @@ Channel::Channel(std::string name, WebsocketRails & dispatcher, bool is_private,
  *  Functions                       *
  ************************************/
 
-void Channel::destroy() {
+void Channel::destroy(cb_func success_callback, cb_func failure_callback) {
   if(this->getConnectionId() == (this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "")) {
     std::string event_name = "websocket_rails.unsubscribe";
     jsonxx::Array data = this->initEventData(event_name);
-    Event event(data);
+    Event event(data, success_callback, failure_callback);
     this->dispatcher->triggerEvent(event);
   }
   {
@@ -198,7 +198,7 @@ void Channel::initObject() {
   }
   this->setConnectionId(this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "");
   jsonxx::Array data = this->initEventData(event_name);
-  Event event(data, boost::bind(&Channel::successLauncher, this, _1), boost::bind(&Channel::failureLauncher, this, _1));
+  Event event = Event(data, this->on_success, this->on_failure);
   this->dispatcher->triggerEvent(event);
 }
 
@@ -209,20 +209,6 @@ jsonxx::Array Channel::initEventData(std::string event_name) {
   event_data << "data" << jsonxx::Object("channel", this->name);
   data << event_name << event_data << this->getConnectionId();
   return data;
-}
-
-
-void Channel::successLauncher(jsonxx::Object data) {
-  if(this->on_success) {
-    this->on_success(data);
-  }
-}
-
-
-void Channel::failureLauncher(jsonxx::Object data) {
-  if (this->on_failure) {
-    this->on_failure(data);
-  }
 }
 
 

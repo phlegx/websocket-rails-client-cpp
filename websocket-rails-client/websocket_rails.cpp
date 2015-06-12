@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.cpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : WebsocketRails Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -274,13 +274,33 @@ Channel WebsocketRails::subscribePrivate(std::string channel_name, cb_func succe
 
 
 void WebsocketRails::unsubscribe(std::string channel_name) {
-  websocket_rails_lock guard(channel_queue_mutex);
-  if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
-    return;
+  Channel channel;
+  {
+    websocket_rails_lock guard(channel_queue_mutex);
+    if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
+      return;
+    }
+    channel = this->channel_queue[channel_name];
+    this->channel_queue.erase(channel_name);
   }
-  this->channel_queue[channel_name].destroy();
-  this->channel_queue.erase(channel_name);
+  cb_func success_callback, failure_callback;
+  channel.destroy(success_callback, failure_callback);
 }
+
+
+void WebsocketRails::unsubscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
+  Channel channel;
+  {
+    websocket_rails_lock guard(channel_queue_mutex);
+    if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
+      return;
+    }
+    channel = this->channel_queue[channel_name];
+    this->channel_queue.erase(channel_name);
+  }
+  channel.destroy(success_callback, failure_callback);
+}
+
 
 
 /********************************************************
@@ -348,7 +368,8 @@ std::vector<Channel> WebsocketRails::reconnectChannels() {
   for(auto& x: this->channel_queue) {
     Channel channel = x.second;
     map_vec_cb_func callbacks = channel.getCallbacks();
-    channel.destroy();
+    cb_func success_callback, failure_callback;
+    channel.destroy(success_callback, failure_callback);
     std::string channel_name = channel.getName();
     this->channel_queue.erase(channel_name);
     channel = channel.isPrivate() ? this->subscribePrivate(channel_name) : this->subscribe(channel_name);
@@ -357,3 +378,4 @@ std::vector<Channel> WebsocketRails::reconnectChannels() {
   }
   return results;
 }
+

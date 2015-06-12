@@ -1,7 +1,7 @@
 /**
  *
  * Name        : channel.hpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : Channel Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -48,7 +48,7 @@ public:
   /**
    *  Functions
    **/
-  void destroy();
+  void destroy(cb_func success_callback, cb_func failure_callback);
   void bind(std::string event_name, cb_func callback);
   void unbindAll(std::string event_name);
   void trigger(std::string event_name, jsonxx::Object event_data);
@@ -84,8 +84,6 @@ private:
   void setToken(std::string token);
   void initObject();
   jsonxx::Array initEventData(std::string event_name);
-  void successLauncher(jsonxx::Object data);
-  void failureLauncher(jsonxx::Object data);
   std::queue<Event> flush_queue();
 
 };

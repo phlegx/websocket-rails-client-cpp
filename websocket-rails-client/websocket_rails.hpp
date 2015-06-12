@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.hpp
- * Version     : v0.7.1
+ * Version     : v0.7.2
  * Description : WesocketRails Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -100,6 +100,7 @@ public:
   Channel subscribePrivate(std::string channel_name);
   Channel subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback);
   void unsubscribe(std::string channel_name);
+  void unsubscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback);
 
 private:
 
