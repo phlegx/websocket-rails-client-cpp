@@ -54,17 +54,21 @@ Channel::Channel(std::string name, WebsocketRails & dispatcher, bool is_private,
  ************************************/
 
 void Channel::destroy() {
-  if(this->connection_id == (this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "")) {
+  if(this->getConnectionId() == (this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "")) {
     std::string event_name = "websocket_rails.unsubscribe";
     jsonxx::Array data = this->initEventData(event_name);
     Event event(data);
     this->dispatcher->triggerEvent(event);
   }
-  this->callbacks.clear();
+  {
+    channel_lock guard(this->dispatcher->ch_callbacks_mutex);
+    this->callbacks.clear();
+  }
 }
 
 
 void Channel::bind(std::string event_name, cb_func callback) {
+  channel_lock guard(this->dispatcher->ch_callbacks_mutex);
   if(this->callbacks.find(event_name) == this->callbacks.end()) {
     vec_cb_func v;
     this->callbacks[event_name] = v;
@@ -74,6 +78,7 @@ void Channel::bind(std::string event_name, cb_func callback) {
 
 
 void Channel::unbindAll(std::string event_name) {
+  channel_lock guard(this->dispatcher->ch_callbacks_mutex);
   if(this->callbacks.find(event_name) != this->callbacks.end()) {
     this->callbacks.erase(event_name);
   }
@@ -84,9 +89,10 @@ void Channel::trigger(std::string event_name, jsonxx::Object event_data) {
   jsonxx::Array data = this->initEventData(event_name);
   data.get<jsonxx::Object>(1).import("channel", this->name);
   data.get<jsonxx::Object>(1).import("data", event_data);
-  data.get<jsonxx::Object>(1).import("token", this->token);
+  data.get<jsonxx::Object>(1).import("token", this->getToken());
   Event event(data);
-  if(this->token.empty()) {
+  if(this->getToken().empty()) {
+    channel_lock guard(this->dispatcher->ch_event_queue_mutex);
     this->event_queue.push(event);
   } else {
     this->dispatcher->triggerEvent(event);
@@ -97,9 +103,10 @@ void Channel::trigger(std::string event_name, jsonxx::Object event_data, cb_func
   jsonxx::Array data = this->initEventData(event_name);
   data.get<jsonxx::Object>(1).import("channel", this->name);
   data.get<jsonxx::Object>(1).import("data", event_data);
-  data.get<jsonxx::Object>(1).import("token", this->token);
+  data.get<jsonxx::Object>(1).import("token", this->getToken());
   Event event(data, success_callback, failure_callback);
-  if(this->token.empty()) {
+  if(this->getToken().empty()) {
+    channel_lock guard(this->dispatcher->ch_event_queue_mutex);
     this->event_queue.push(event);
   } else {
     this->dispatcher->triggerEvent(event);
@@ -113,11 +120,13 @@ std::string Channel::getName() {
 
 
 map_vec_cb_func Channel::getCallbacks() {
+  channel_lock guard(this->dispatcher->ch_callbacks_mutex);
   return this->callbacks;
 }
 
 
 void Channel::setCallbacks(map_vec_cb_func callbacks) {
+  channel_lock guard(this->dispatcher->ch_callbacks_mutex);
   this-> callbacks = callbacks;
 }
 
@@ -129,14 +138,18 @@ bool Channel::isPrivate() {
 
 void Channel::dispatch(std::string event_name, jsonxx::Object event_data) {
   if(event_name == "websocket_rails.channel_token") {
-    this->connection_id =  this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "";
-    this->token = event_data.get<jsonxx::String>("token");
+    this->setConnectionId(this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "");
+    this->setToken(event_data.get<jsonxx::String>("token"));
     this->flush_queue();
   } else {
-    if(this->callbacks.find(event_name) == this->callbacks.end()) {
-      return;
+    vec_cb_func event_callbacks;
+    {
+      channel_lock guard(this->dispatcher->ch_callbacks_mutex);
+      if(this->callbacks.find(event_name) == this->callbacks.end()) {
+        return;
+      }
+      event_callbacks = this->callbacks[event_name];
     }
-    vec_cb_func event_callbacks = this->callbacks[event_name];
     for(vec_cb_func::iterator it = event_callbacks.begin(); it != event_callbacks.end(); ++it) {
       cb_func callback = *it;
       callback(event_data);
@@ -152,6 +165,30 @@ void Channel::dispatch(std::string event_name, jsonxx::Object event_data) {
  *                                                      *
  ********************************************************/
 
+std::string Channel::getConnectionId() {
+  channel_lock guard(this->dispatcher->ch_connection_id_mutex);
+  return this->connection_id;
+}
+
+
+void Channel::setConnectionId(std::string connection_id) {
+  channel_lock guard(this->dispatcher->ch_connection_id_mutex);
+  this->connection_id = connection_id;
+}
+
+
+std::string Channel::getToken() {
+  channel_lock guard(this->dispatcher->ch_token_mutex);
+  return this->token;
+}
+
+
+void Channel::setToken(std::string token) {
+  channel_lock guard(this->dispatcher->ch_token_mutex);
+  this->token = token;
+}
+
+
 void Channel::initObject() {
   std::string event_name;
   if(this->is_private) {
@@ -159,7 +196,7 @@ void Channel::initObject() {
   } else {
     event_name = "websocket_rails.subscribe";
   }
-  this->connection_id = this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "";
+  this->setConnectionId(this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "");
   jsonxx::Array data = this->initEventData(event_name);
   Event event(data, boost::bind(&Channel::successLauncher, this, _1), boost::bind(&Channel::failureLauncher, this, _1));
   this->dispatcher->triggerEvent(event);
@@ -170,7 +207,7 @@ jsonxx::Array Channel::initEventData(std::string event_name) {
   jsonxx::Array data;
   jsonxx::Object event_data;
   event_data << "data" << jsonxx::Object("channel", this->name);
-  data << event_name << event_data << this->connection_id;
+  data << event_name << event_data << this->getConnectionId();
   return data;
 }
 
@@ -190,6 +227,7 @@ void Channel::failureLauncher(jsonxx::Object data) {
 
 
 std::queue<Event> Channel::flush_queue() {
+  channel_lock guard(this->dispatcher->event_queue_mutex);
   while(!this->event_queue.empty()) {
     Event event = this->event_queue.front();
     this->dispatcher->triggerEvent(event);

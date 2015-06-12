@@ -79,7 +79,7 @@ void WebsocketConnection::run() {
 void WebsocketConnection::close() {
   this->ws_client.get_alog().write(websocketpp::log::alevel::app,
   "Connection closed by client!");
-  websocket_lock guard(ws_mutex);
+  websocket_connection_lock guard(handler_mutex);
   if(this->dispatcher && this->dispatcher->getConn() == this) {
     this->ws_client.close(this->ws_hdl, websocketpp::close::status::normal, "Close by client.");
   }
@@ -89,6 +89,7 @@ void WebsocketConnection::close() {
 /* Trigger an event on the server */
 void WebsocketConnection::trigger(Event event) {
   if(this->dispatcher->getState() != "connected") {
+    websocket_connection_lock guard(this->event_queue_mutex);
     this->event_queue.push(event);
   } else {
     this->sendEvent(event);
@@ -98,18 +99,21 @@ void WebsocketConnection::trigger(Event event) {
 
 /* Set the connection id */
 std::string WebsocketConnection::setConnectionId(std::string connection_id) {
+  websocket_connection_lock guard(this->connection_id_mutex);
   return this->connection_id = connection_id;
 }
 
 
 /* Get the connection id */
 std::string WebsocketConnection::getConnectionId() {
+  websocket_connection_lock guard(this->connection_id_mutex);
   return this->connection_id;
 }
 
 
 /* Flush all events in queue */
 std::queue<Event> WebsocketConnection::flushQueue() {
+  websocket_connection_lock guard(this->event_queue_mutex);
   while(!this->event_queue.empty()) {
     Event event = this->event_queue.front();
     this->trigger(event);
@@ -131,7 +135,6 @@ std::queue<Event> WebsocketConnection::flushQueue() {
 void WebsocketConnection::openHandler(websocketpp::connection_hdl hdl) {
   this->ws_client.get_alog().write(websocketpp::log::alevel::app,
   "Connection opened, starting websocket!");
-  websocket_lock guard(ws_mutex);
 }
 
 
@@ -139,12 +142,12 @@ void WebsocketConnection::openHandler(websocketpp::connection_hdl hdl) {
 void WebsocketConnection::closeHandler(websocketpp::connection_hdl hdl) {
   this->ws_client.get_alog().write(websocketpp::log::alevel::app,
   "Connection closed, stopping websocket!");
-  websocket_lock guard(ws_mutex);
+  websocket_connection_lock guard(handler_mutex);
   if(this->dispatcher && this->dispatcher->getConn() == this) {
     this->dispatcher->setState("disconnected");
     if(this->dispatcher->getOnCloseCallback()) {
       cb_func callback = this->dispatcher->getOnCloseCallback();
-      callback(jsonxx::Object("connection_id", this->connection_id));
+      callback(jsonxx::Object("connection_id", this->getConnectionId()));
     }
   }
 }
@@ -154,12 +157,12 @@ void WebsocketConnection::closeHandler(websocketpp::connection_hdl hdl) {
 void WebsocketConnection::failHandler(websocketpp::connection_hdl hdl) {
   this->ws_client.get_alog().write(websocketpp::log::alevel::app,
   "Connection failed, stopping websocket!");
-  websocket_lock guard(ws_mutex);
+  websocket_connection_lock guard(handler_mutex);
   if(this->dispatcher && this->dispatcher->getConn() == this) {
     this->dispatcher->setState("disconnected");
     if(this->dispatcher->getOnFailCallback()) {
       cb_func callback = this->dispatcher->getOnFailCallback();
-      callback(jsonxx::Object("connection_id", this->connection_id));
+      callback(jsonxx::Object("connection_id", this->getConnectionId()));
     }
   }
 }
@@ -178,15 +181,16 @@ void WebsocketConnection::messageHandler(websocketpp::connection_hdl hdl, messag
     this->ws_client.get_alog().write(websocketpp::log::alevel::app,
     "Message arrived: " + event_names);
   }
+  websocket_connection_lock guard(handler_mutex);
   if(this->dispatcher && this->dispatcher->getConn() == this) {
-    this->dispatcher->newMessage(event_data);
+    boost::thread(&WebsocketRails::newMessage, this->dispatcher, event_data);
   }
 }
 
 
 void WebsocketConnection::sendEvent(Event event) {
-  if(this->connection_id != "") {
-    event.setConnectionId(this->connection_id);
+  if(this->getConnectionId() != "") {
+    event.setConnectionId(this->getConnectionId());
   }
   websocketpp::lib::error_code ec;
   this->ws_client.send(this->ws_hdl, event.serialize(), websocketpp::frame::opcode::text, ec);

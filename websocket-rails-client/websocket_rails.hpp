@@ -34,6 +34,20 @@ class WebsocketRails {
 public:
 
   /**
+   *  Mutex
+   **/
+  websocketpp::lib::mutex ch_connection_id_mutex;
+  websocketpp::lib::mutex ch_token_mutex;
+  websocketpp::lib::mutex ch_callbacks_mutex;
+  websocketpp::lib::mutex ch_event_queue_mutex;
+
+  websocketpp::lib::mutex state_mutex;
+  websocketpp::lib::mutex callbacks_mutex;
+  websocketpp::lib::mutex channel_queue_mutex;
+  websocketpp::lib::mutex event_queue_mutex;
+  typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> websocket_rails_lock;
+
+  /**
    *  Connection Return Type
    **/
   typedef struct {

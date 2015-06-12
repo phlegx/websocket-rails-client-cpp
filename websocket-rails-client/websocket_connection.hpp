@@ -34,12 +34,18 @@ class WebsocketConnection {
 public:
 
   /**
+   *  Mutex
+   **/
+  websocketpp::lib::mutex handler_mutex;
+  websocketpp::lib::mutex connection_id_mutex;
+  websocketpp::lib::mutex event_queue_mutex;
+
+  /**
    *  Type Definitions and Variables
    **/
-  typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> websocket_lock;
+  typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> websocket_connection_lock;
   typedef websocketpp::client<websocketpp::config::asio_client> client;
   typedef websocketpp::config::asio_client::message_type::ptr message_ptr;
-  websocketpp::lib::mutex ws_mutex;
   static const std::string connection_type;
 
   /**

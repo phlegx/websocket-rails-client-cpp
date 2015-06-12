@@ -34,6 +34,11 @@ class Channel {
 public:
 
   /**
+   *  Mutex
+   **/
+  typedef websocketpp::lib::lock_guard<websocketpp::lib::mutex> channel_lock;
+
+  /**
    *  Constructors
    **/
   Channel();
@@ -73,6 +78,10 @@ private:
   /**
    *  Functions
    **/
+  std::string getConnectionId();
+  void setConnectionId(std::string connection_id);
+  std::string getToken();
+  void setToken(std::string token);
   void initObject();
   jsonxx::Array initEventData(std::string event_name);
   void successLauncher(jsonxx::Object data);
