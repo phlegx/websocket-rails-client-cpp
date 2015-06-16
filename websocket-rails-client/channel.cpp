@@ -1,7 +1,7 @@
 /**
  *
  * Name        : channel.cpp
- * Version     : v0.7.2
+ * Version     : v0.7.3
  * Description : Channel Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -54,7 +54,7 @@ Channel::Channel(std::string name, WebsocketRails & dispatcher, bool is_private,
  ************************************/
 
 void Channel::destroy(cb_func success_callback, cb_func failure_callback) {
-  if(this->connection_id == (this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "")) {
+  if(this->connection_id == (this->dispatcher->getConn() != NULL ? this->dispatcher->getConn()->getConnectionId() : "")) {
     std::string event_name = "websocket_rails.unsubscribe";
     jsonxx::Array data = this->initEventData(event_name);
     Event event(data, success_callback, failure_callback);
@@ -118,7 +118,7 @@ map_vec_cb_func Channel::getCallbacks() {
 
 
 void Channel::setCallbacks(map_vec_cb_func callbacks) {
-  this-> callbacks = callbacks;
+  this->callbacks = callbacks;
 }
 
 
@@ -129,7 +129,7 @@ bool Channel::isPrivate() {
 
 void Channel::dispatch(std::string event_name, jsonxx::Object event_data) {
   if(event_name == "websocket_rails.channel_token") {
-    this->connection_id =  this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "";
+    this->connection_id =  this->dispatcher->getConn() != NULL ? this->dispatcher->getConn()->getConnectionId() : "";
     this->token = event_data.get<jsonxx::String>("token");
     this->flush_queue();
   } else {
@@ -159,7 +159,7 @@ void Channel::initObject() {
   } else {
     event_name = "websocket_rails.subscribe";
   }
-  this->connection_id = this->dispatcher->getConn() != 0 ? this->dispatcher->getConn()->getConnectionId() : "";
+  this->connection_id = this->dispatcher->getConn() != NULL ? this->dispatcher->getConn()->getConnectionId() : "";
   jsonxx::Array data = this->initEventData(event_name);
   Event event(data, this->on_success, this->on_failure);
   this->dispatcher->triggerEvent(event);

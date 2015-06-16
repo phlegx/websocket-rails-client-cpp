@@ -1,7 +1,7 @@
 /**
  *
  * Name        : event.cpp
- * Version     : v0.7.2
+ * Version     : v0.7.3
  * Description : Event Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems

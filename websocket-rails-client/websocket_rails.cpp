@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.cpp
- * Version     : v0.7.2
+ * Version     : v0.7.3
  * Description : WebsocketRails Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -40,8 +40,8 @@ WebsocketRails::WebsocketRails(std::string url) : url(url), conn() {}
 
 std::string WebsocketRails::connect() {
   this->state = "connecting";
-  this->conn = new WebsocketConnection(this->url, *this);
-  this->websocket_connection_thread = boost::thread(&WebsocketConnection::run, this->conn);
+  this->setConn(new WebsocketConnection(this->url, *this));
+  this->websocket_connection_thread = boost::thread(&WebsocketConnection::run, this->getConn());
   int count = 0;
   while(!this->isConnected()) {
     boost::posix_time::seconds workTime(1);
@@ -56,12 +56,14 @@ std::string WebsocketRails::connect() {
 
 
 std::string WebsocketRails::disconnect() {
-  if(this->conn != 0) {
+  if(this->getConn() != NULL) {
     if(this->isConnected()) {
-      this->conn->close();
+      this->getConn()->close();
     }
+    this->websocket_connection_thread.interrupt();
     this->websocket_connection_thread.join();
-    delete this->conn;
+    delete this->getConn();
+    this->setConn(NULL);
   }
   return this->state = "disconnected";
 }
@@ -69,7 +71,7 @@ std::string WebsocketRails::disconnect() {
 
 WebsocketRails::connection WebsocketRails::reconnect() {
   connection conn_struct;
-  std::string oldconnection_id = this->conn != 0 ? this->conn->getConnectionId() : "";
+  std::string oldconnection_id = this->getConn() != NULL ? this->getConn()->getConnectionId() : "";
   this->disconnect();
   if(this->connect() == "connected") {
     for(auto& x: this->event_queue) {
@@ -184,7 +186,7 @@ void WebsocketRails::unbindAll(std::string event_name) {
 
 void WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data) {
   jsonxx::Array data;
-  data << event_name << event_data << (this->conn != 0 ? this->conn->getConnectionId() : "");
+  data << event_name << event_data << (this->getConn() != NULL ? this->getConn()->getConnectionId() : "");
   Event event(data);
   this->triggerEvent(event);
 }
@@ -192,7 +194,7 @@ void WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data) 
 
 void WebsocketRails::trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback) {
   jsonxx::Array data;
-  data << event_name << event_data << (this->conn != 0 ? this->conn->getConnectionId() : "");
+  data << event_name << event_data << (this->getConn() != NULL ? this->getConn()->getConnectionId() : "");
   Event event(data, success_callback, failure_callback);
   this->triggerEvent(event);
 }
@@ -202,8 +204,8 @@ void WebsocketRails::triggerEvent(Event event) {
   if(this->event_queue.find(event.getId()) == this->event_queue.end()) {
     this->event_queue[event.getId()] = event;
   }
-  if(this->conn != 0) {
-    this->conn->trigger(event);
+  if(this->getConn() != NULL) {
+    this->getConn()->trigger(event);
   }
 }
 
@@ -284,10 +286,15 @@ void WebsocketRails::unsubscribe(std::string channel_name, cb_func success_callb
  ********************************************************/
 
 
+void WebsocketRails::setConn(WebsocketConnection * conn) {
+  this->conn = conn;
+}
+
+
 void WebsocketRails::connectionEstablished(jsonxx::Object event_data) {
   this->state = "connected";
-  this->conn->setConnectionId(event_data.get<jsonxx::String>("connection_id"));
-  this->conn->flushQueue();
+  this->getConn()->setConnectionId(event_data.get<jsonxx::String>("connection_id"));
+  this->getConn()->flushQueue();
   if(this->on_open_callback) {
     this->on_open_callback(event_data);
   }
@@ -316,9 +323,9 @@ void WebsocketRails::dispatchChannel(Event event) {
 
 void WebsocketRails::pong() {
   jsonxx::Array data;
-  data << "websocket_rails.pong" << jsonxx::Object() << (this->conn != 0 ? this->conn->getConnectionId() : "");
+  data << "websocket_rails.pong" << jsonxx::Object() << (this->getConn() != NULL ? this->getConn()->getConnectionId() : "");
   Event pong(data);
-  this->conn->trigger(pong);
+  this->getConn()->trigger(pong);
 }
 
 
@@ -329,7 +336,8 @@ bool WebsocketRails::connectionStale() {
 
 std::vector<Channel> WebsocketRails::reconnectChannels() {
   std::vector<Channel> results;
-  for(auto& x: this->channel_queue) {
+  std::tr1::unordered_map<std::string, Channel> channel_queue_old = this->channel_queue;
+  for(auto& x: channel_queue_old) {
     Channel channel = x.second;
     map_vec_cb_func callbacks = channel.getCallbacks();
     cb_func success_callback, failure_callback;
