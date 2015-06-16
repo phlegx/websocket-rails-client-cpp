@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.hpp
- * Version     : v0.7.3
+ * Version     : v0.7.3-NB
  * Description : WesocketRails Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems

@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket.hpp
- * Version     : v0.7.3
+ * Version     : v0.7.3-NB
  * Description : WebsocketConnection Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
