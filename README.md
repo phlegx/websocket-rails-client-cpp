@@ -35,9 +35,9 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Connection Callbacks
 
- * ```on_open(boost::bind cb)```  : callback on open connection.
- * ```on_close(boost::bind cb)``` : callback on close connection.
- * ```on_fail(boost::bind cb)```  : callback on fail connection.
+ * ```onOpen(boost::bind cb)```  : callback on open connection.
+ * ```onClose(boost::bind cb)``` : callback on close connection.
+ * ```onFail(boost::bind cb)```  : callback on fail connection.
 
 #### Trigger an Event on Server
 
