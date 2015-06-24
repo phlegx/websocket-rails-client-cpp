@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.cpp
- * Version     : v0.7.3-NB
+ * Version     : v0.7.4-NB
  * Description : WebsocketRails Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -69,8 +69,7 @@ std::string WebsocketRails::disconnect() {
 }
 
 
-WebsocketRails::connection WebsocketRails::reconnect() {
-  connection conn_struct;
+void WebsocketRails::reconnect() {
   std::string oldconnection_id = this->getConn() != NULL ? this->getConn()->getConnectionId() : "";
   this->disconnect();
   if(this->connect() == "connected") {
@@ -80,10 +79,8 @@ WebsocketRails::connection WebsocketRails::reconnect() {
           this->triggerEvent(event);
         }
     }
-    conn_struct.channels = this->reconnectChannels();
+    this->reconnectChannels();
   }
-  conn_struct.state = this->getState();
-  return conn_struct;
 }
 
 
@@ -227,68 +224,71 @@ void WebsocketRails::triggerEvent(Event event) {
  *  Channel functions               *
  ************************************/
 
-Channel WebsocketRails::subscribe(std::string channel_name) {
+
+Channel * WebsocketRails::getChannel(std::string channel_name) {
+  websocket_rails_lock guard(channel_queue_mutex);
+  return &this->channel_queue[channel_name];
+}
+
+
+Channel * WebsocketRails::subscribe(std::string channel_name) {
   websocket_rails_lock guard(channel_queue_mutex);
   return this->processSubscribe(channel_name, false);
 }
 
 
-Channel WebsocketRails::subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
+Channel * WebsocketRails::subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
   websocket_rails_lock guard(channel_queue_mutex);
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, false, success_callback, failure_callback);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
-Channel WebsocketRails::subscribePrivate(std::string channel_name) {
+Channel * WebsocketRails::subscribePrivate(std::string channel_name) {
   websocket_rails_lock guard(channel_queue_mutex);
   return this->processSubscribe(channel_name, true);
 }
 
 
-Channel WebsocketRails::subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
+Channel * WebsocketRails::subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
   websocket_rails_lock guard(channel_queue_mutex);
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, true, success_callback, failure_callback);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
 void WebsocketRails::unsubscribe(std::string channel_name) {
-  Channel channel;
+  Channel * channel;
   {
     websocket_rails_lock guard(channel_queue_mutex);
     if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
       return;
     }
-    channel = this->channel_queue[channel_name];
+    channel = &this->channel_queue[channel_name];
     this->channel_queue.erase(channel_name);
   }
   cb_func success_callback, failure_callback;
-  channel.destroy(success_callback, failure_callback);
+  channel->destroy(success_callback, failure_callback);
 }
 
 
 void WebsocketRails::unsubscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
-  Channel channel;
+  Channel * channel;
   {
     websocket_rails_lock guard(channel_queue_mutex);
     if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
       return;
     }
-    channel = this->channel_queue[channel_name];
+    channel = &this->channel_queue[channel_name];
     this->channel_queue.erase(channel_name);
   }
-  channel.destroy(success_callback, failure_callback);
+  channel->destroy(success_callback, failure_callback);
 }
 
 
@@ -300,14 +300,12 @@ void WebsocketRails::unsubscribe(std::string channel_name, cb_func success_callb
  ********************************************************/
 
 
-Channel WebsocketRails::processSubscribe(std::string channel_name, bool is_private) {
+Channel * WebsocketRails::processSubscribe(std::string channel_name, bool is_private) {
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, is_private);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
@@ -343,15 +341,15 @@ void WebsocketRails::dispatch(Event event) {
 
 
 void WebsocketRails::dispatchChannel(Event event) {
-  Channel channel;
+  Channel * channel;
   {
     websocket_rails_lock guard(channel_queue_mutex);
     if(this->channel_queue.find(event.getChannel()) == this->channel_queue.end()) {
       return;
     }
-    channel = this->channel_queue[event.getChannel()];
+    channel = &this->channel_queue[event.getChannel()];
   }
-  channel.dispatch(event.getName(), event.getData());
+  channel->dispatch(event.getName(), event.getData());
 }
 
 
@@ -368,21 +366,18 @@ bool WebsocketRails::connectionStale() {
 }
 
 
-std::vector<Channel> WebsocketRails::reconnectChannels() {
-  std::vector<Channel> results;
+void WebsocketRails::reconnectChannels() {
   websocket_rails_lock guard(channel_queue_mutex);
   std::tr1::unordered_map<std::string, Channel> channel_queue_old = this->channel_queue;
   for(auto& x: channel_queue_old) {
-    Channel channel = x.second;
-    map_vec_cb_func callbacks = channel.getCallbacks();
+    Channel * channel = &x.second;
+    map_vec_cb_func callbacks = channel->getCallbacks();
     cb_func success_callback, failure_callback;
-    channel.destroy(success_callback, failure_callback);
-    std::string channel_name = channel.getName();
+    channel->destroy(success_callback, failure_callback);
+    std::string channel_name = channel->getName();
     this->channel_queue.erase(channel_name);
-    channel = this->processSubscribe(channel_name, channel.isPrivate());
-    channel.setCallbacks(callbacks);
-    results.push_back(channel);
+    channel = this->processSubscribe(channel_name, channel->isPrivate());
+    channel->setCallbacks(callbacks);
   }
-  return results;
 }
 

@@ -1,7 +1,7 @@
 /**
  *
  * Name        : channel.hpp
- * Version     : v0.7.3-NB
+ * Version     : v0.7.4-NB
  * Description : Channel Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -52,7 +52,6 @@ public:
   void bind(std::string event_name, cb_func callback);
   void unbindAll(std::string event_name);
   void trigger(std::string event_name, jsonxx::Object event_data);
-  void trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback);
   std::string getName();
   map_vec_cb_func getCallbacks();
   void setCallbacks(map_vec_cb_func callbacks);

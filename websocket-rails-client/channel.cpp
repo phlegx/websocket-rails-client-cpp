@@ -1,7 +1,7 @@
 /**
  *
  * Name        : channel.cpp
- * Version     : v0.7.3-NB
+ * Version     : v0.7.4-NB
  * Description : Channel Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -73,7 +73,7 @@ void Channel::bind(std::string event_name, cb_func callback) {
     vec_cb_func v;
     this->callbacks[event_name] = v;
   }
-  return this->callbacks[event_name].push_back(callback);
+  this->callbacks[event_name].push_back(callback);
 }
 
 
@@ -91,20 +91,6 @@ void Channel::trigger(std::string event_name, jsonxx::Object event_data) {
   data.get<jsonxx::Object>(1).import("data", event_data);
   data.get<jsonxx::Object>(1).import("token", this->getToken());
   Event event(data);
-  if(this->getToken().empty()) {
-    channel_lock guard(this->dispatcher->ch_event_queue_mutex);
-    this->event_queue.push(event);
-  } else {
-    this->dispatcher->triggerEvent(event);
-  }
-}
-
-void Channel::trigger(std::string event_name, jsonxx::Object event_data, cb_func success_callback, cb_func failure_callback) {
-  jsonxx::Array data = this->initEventData(event_name);
-  data.get<jsonxx::Object>(1).import("channel", this->name);
-  data.get<jsonxx::Object>(1).import("data", event_data);
-  data.get<jsonxx::Object>(1).import("token", this->getToken());
-  Event event(data, success_callback, failure_callback);
   if(this->getToken().empty()) {
     channel_lock guard(this->dispatcher->ch_event_queue_mutex);
     this->event_queue.push(event);
