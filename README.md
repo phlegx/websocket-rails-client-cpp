@@ -56,7 +56,7 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Channel Management
 
-* ```getChannel(std::string channel_name)`` : Get a channel after subscribed to it.
+* ```getChannel(std::string channel_name)``` : Get a channel after subscribed to it.
 * ```subscribe(std::string channel_name)``` : Subscribe to a channel.
 * ```subscribePrivate(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail)``` : Subscribe to a private channel with callbacks.
 * ```unsubscribe(std::string channel_name)``` : Unsubscribe a channel.
