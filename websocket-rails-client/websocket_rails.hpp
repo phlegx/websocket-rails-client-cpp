@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.hpp
- * Version     : v0.7.3
+ * Version     : v0.7.4
  * Description : WesocketRails Header Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -34,14 +34,6 @@ class WebsocketRails {
 public:
 
   /**
-   *  Connection Return Type
-   **/
-  typedef struct {
-    std::string state;
-    std::vector<Channel> channels;
-  } connection;
-
-  /**
    *  Constructors
    **/
   WebsocketRails();
@@ -52,7 +44,7 @@ public:
    **/
   std::string connect();
   std::string disconnect();
-  connection reconnect();
+  void reconnect();
   std::string getState();
   std::string setState(std::string state);
   WebsocketConnection * getConn();
@@ -81,10 +73,11 @@ public:
   /**
    *  Channel functions
    **/
-  Channel subscribe(std::string channel_name);
-  Channel subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback);
-  Channel subscribePrivate(std::string channel_name);
-  Channel subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback);
+  Channel * getChannel(std::string channel_name);
+  Channel * subscribe(std::string channel_name);
+  Channel * subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback);
+  Channel * subscribePrivate(std::string channel_name);
+  Channel * subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback);
   void unsubscribe(std::string channel_name);
   void unsubscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback);
 
@@ -107,14 +100,14 @@ private:
   /**
    *  Functions
    **/
-  Channel processSubscribe(std::string channel_name, bool is_private);
+  Channel * processSubscribe(std::string channel_name, bool is_private);
   void setConn(WebsocketConnection * conn);
   void connectionEstablished(jsonxx::Object data);
   void dispatch(Event event);
   void dispatchChannel(Event event);
   void pong();
   bool connectionStale();
-  std::vector<Channel> reconnectChannels();
+  void reconnectChannels();
 
 };
 

@@ -1,4 +1,4 @@
-# WebsocketRailsClient++ (v0.7.3)
+# WebsocketRailsClient++ (v0.7.4)
 
 WebsocketRailsClient++ is a C++ library that uses the implementation of RFC6455 (The WebSocket Protocol)
 implemented in the WebSocket++ library, the Json++ light-weight JSON parser and the Boost library. It allows
@@ -35,9 +35,9 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Connection Callbacks
 
- * ```on_open(boost::bind cb)```  : callback on open connection.
- * ```on_close(boost::bind cb)``` : callback on close connection.
- * ```on_fail(boost::bind cb)```  : callback on fail connection.
+ * ```onOpen(boost::bind cb)```  : callback on open connection.
+ * ```onClose(boost::bind cb)``` : callback on close connection.
+ * ```onFail(boost::bind cb)```  : callback on fail connection.
 
 #### Trigger an Event on Server
 
@@ -56,6 +56,7 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 
 #### Channel Management
 
+* ```getChannel(std::string channel_name)``` : Get a channel after subscribed to it.
 * ```subscribe(std::string channel_name)``` : Subscribe to a channel.
 * ```subscribePrivate(std::string channel_name, boost::bind cb_succ, boost::bind cb_fail)``` : Subscribe to a private channel with callbacks.
 * ```unsubscribe(std::string channel_name)``` : Unsubscribe a channel.
@@ -64,7 +65,6 @@ connections to the Ruby Websocket-Rails server and supports the Websocket-Rails 
 #### Trigger a Channel-Event on Server
 
 * ```trigger(std::string event_name, jsonxx::Object event_data)``` : trigger channel event with data without callback.
-* ```trigger(std::string event_name, jsonxx::Object event_data, boost::bind cb_succ, boost::bind cb_fail)``` : trigger channel event with data and callbacks.
 
 #### Bind to an Incoming Channel-Event
 
@@ -147,36 +147,36 @@ dispatcher.connect();
 
 ```cpp
 /* Event bind callback definition */
-dispatcher.bind("users.pool", boost::bind(callback, _1));
+dispatcher.bind("users_pool", boost::bind(callback, _1));
 
 /* Event bind callback definition with member function callback */
 Foo my_foo;
-Event event3 = dispatcher.bind("users.pool", boost::bind(&Foo::success_func, my_foo, _1));
+dispatcher.bind("users_pool", boost::bind(&Foo::success_func, my_foo, _1));
 
 /* Event unbind callback definition */
-dispatcher.unbindAll("users.pool");
+dispatcher.unbindAll("users_pool");
 ```
 
 * Trigger events
 
 ```cpp
 /* Trigger an event */
-Event event1 = dispatcher.trigger("users.create", jsonxx::Object("name", "Hans Mustermann"));
-Event event2 = dispatcher.trigger("users.create", jsonxx::Object("name", "Frau Mustermann"), boost::bind(success_func, _1), boost::bind(failure_func, _1));
+dispatcher.trigger("users_create", jsonxx::Object("name", "Hans Mustermann"));
+dispatcher.trigger("users_create", jsonxx::Object("name", "Frau Mustermann"), boost::bind(success_func, _1), boost::bind(failure_func, _1));
 
 /* Trigger an event with member function callback */
 Bar my_bar;
-Event event3 = dispatcher.trigger("users.pool", boost::bind(&Foo::success_func, my_bar, _1), boost::bind(&Foo::failure_func, my_bar, _1));
+dispatcher.trigger("users_pool", boost::bind(&Foo::success_func, my_bar, _1), boost::bind(&Foo::failure_func, my_bar, _1));
 ```
 
 * Use channels
 
 ```cpp
 /* Subscribe to channels */
-Channel channel1 = dispatcher.subscribe("Authors");
-Channel channel2 = dispatcher.subscribe("Users", boost::bind(success_func, _1), boost::bind(failure_func, _1));
-Channel private_channel1 = dispatcher.subscribePrivate("Administrators");
-Channel private_channel2 = dispatcher.subscribePrivate("Moderators", boost::bind(success_func, _1), boost::bind(failure_func, _1));
+dispatcher.subscribe("Authors");
+dispatcher.subscribe("Users", boost::bind(success_func, _1), boost::bind(failure_func, _1));
+dispatcher.subscribePrivate("Administrators");
+dispatcher.subscribePrivate("Moderators", boost::bind(success_func, _1), boost::bind(failure_func, _1));
 
 /* Unsubscribe channels */
 dispatcher.unsubscribe("Authors");
@@ -187,14 +187,13 @@ dispatcher.unsubscribe("Users", boost::bind(success_func, _1), boost::bind(failu
 
 ```cpp
 /* Trigger an event on channel */
-Event event = channel1.trigger("users.create", jsonxx::Object("name", "Hans Mustermann"));
-Event event = channel2.trigger("users.create", jsonxx::Object("name", "Frau Mustermann"), boost::bind(success_func, _1), boost::bind(failure_func, _1));
+dispatcher.getChannel("Authors").trigger("users_create", jsonxx::Object("name", "Hans Mustermann"));
 
 /* Channel event bind callback definition */
-channel1.bind("users.pool", boost::bind(callback, _1));
+dispatcher.getChannel("Authors").bind("users_pool", boost::bind(callback, _1));
 
 /* Event unbind callback definition */
-channel1.unbindAll("users.pool");
+dispatcher.getChannel("Authors").unbindAll("users_pool");
 ```
 
 * Callback additional parameters

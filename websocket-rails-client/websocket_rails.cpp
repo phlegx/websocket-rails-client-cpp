@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.cpp
- * Version     : v0.7.3
+ * Version     : v0.7.4
  * Description : WebsocketRails Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -69,8 +69,7 @@ std::string WebsocketRails::disconnect() {
 }
 
 
-WebsocketRails::connection WebsocketRails::reconnect() {
-  connection conn_struct;
+void WebsocketRails::reconnect() {
   std::string oldconnection_id = this->getConn() != NULL ? this->getConn()->getConnectionId() : "";
   this->disconnect();
   if(this->connect() == "connected") {
@@ -80,10 +79,8 @@ WebsocketRails::connection WebsocketRails::reconnect() {
           this->triggerEvent(event);
         }
     }
-    conn_struct.channels = this->reconnectChannels();
+    this->reconnectChannels();
   }
-  conn_struct.state = this->state;
-  return conn_struct;
 }
 
 
@@ -215,47 +212,45 @@ void WebsocketRails::triggerEvent(Event event) {
  *  Channel functions               *
  ************************************/
 
-Channel WebsocketRails::subscribe(std::string channel_name) {
+
+Channel * WebsocketRails::getChannel(std::string channel_name) {
+  return &this->channel_queue[channel_name];
+}
+
+
+Channel * WebsocketRails::subscribe(std::string channel_name) {
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, false);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
-Channel WebsocketRails::subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
+Channel * WebsocketRails::subscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, false, success_callback, failure_callback);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
-Channel WebsocketRails::subscribePrivate(std::string channel_name) {
+Channel * WebsocketRails::subscribePrivate(std::string channel_name) {
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, true);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
-Channel WebsocketRails::subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
+Channel * WebsocketRails::subscribePrivate(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
   if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
     Channel channel(channel_name, *this, true, success_callback, failure_callback);
     this->channel_queue[channel_name] = channel;
-    return channel;
-  } else {
-    return this->channel_queue[channel_name];
   }
+  return &this->channel_queue[channel_name];
 }
 
 
@@ -334,19 +329,16 @@ bool WebsocketRails::connectionStale() {
 }
 
 
-std::vector<Channel> WebsocketRails::reconnectChannels() {
-  std::vector<Channel> results;
+void WebsocketRails::reconnectChannels() {
   std::tr1::unordered_map<std::string, Channel> channel_queue_old = this->channel_queue;
   for(auto& x: channel_queue_old) {
-    Channel channel = x.second;
-    map_vec_cb_func callbacks = channel.getCallbacks();
+    Channel * channel = &x.second;
+    map_vec_cb_func callbacks = channel->getCallbacks();
     cb_func success_callback, failure_callback;
-    channel.destroy(success_callback, failure_callback);
-    std::string channel_name = channel.getName();
+    channel->destroy(success_callback, failure_callback);
+    std::string channel_name = channel->getName();
     this->channel_queue.erase(channel_name);
-    channel = channel.isPrivate() ? this->subscribePrivate(channel_name) : this->subscribe(channel_name);
-    channel.setCallbacks(callbacks);
-    results.push_back(channel);
+    channel = channel->isPrivate() ? this->subscribePrivate(channel_name) : this->subscribe(channel_name);
+    channel->setCallbacks(callbacks);
   }
-  return results;
 }

@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket.hpp
- * Version     : v0.7.3
+ * Version     : v0.7.4
  * Description : Websocket Header File in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -44,7 +44,7 @@
 #include <websocketpp/client.hpp>
 #include <websocketpp/common/thread.hpp>
 
-#define TIMEOUT_CONN 30
+#define TIMEOUT_CONN 5
 
 typedef boost::function<void(jsonxx::Object)> cb_func;
 typedef std::vector<boost::function<void(jsonxx::Object)> > vec_cb_func;
