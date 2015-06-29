@@ -1,7 +1,7 @@
 /**
  *
  * Name        : websocket_rails.cpp
- * Version     : v0.7.4-NB
+ * Version     : v0.7.5-NB
  * Description : WebsocketRails Class in C++, Ansi-style
  * Author      : Egon Zemmer
  * Company     : Phlegx Systems
@@ -264,31 +264,31 @@ Channel * WebsocketRails::subscribePrivate(std::string channel_name, cb_func suc
 
 
 void WebsocketRails::unsubscribe(std::string channel_name) {
-  Channel * channel;
+  Channel channel;
   {
     websocket_rails_lock guard(channel_queue_mutex);
     if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
       return;
     }
-    channel = &this->channel_queue[channel_name];
+    channel = this->channel_queue[channel_name];
     this->channel_queue.erase(channel_name);
   }
   cb_func success_callback, failure_callback;
-  channel->destroy(success_callback, failure_callback);
+  channel.destroy(success_callback, failure_callback);
 }
 
 
 void WebsocketRails::unsubscribe(std::string channel_name, cb_func success_callback, cb_func failure_callback) {
-  Channel * channel;
+  Channel channel;
   {
     websocket_rails_lock guard(channel_queue_mutex);
     if(this->channel_queue.find(channel_name) == this->channel_queue.end()) {
       return;
     }
-    channel = &this->channel_queue[channel_name];
+    channel = this->channel_queue[channel_name];
     this->channel_queue.erase(channel_name);
   }
-  channel->destroy(success_callback, failure_callback);
+  channel.destroy(success_callback, failure_callback);
 }
 
 

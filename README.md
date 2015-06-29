@@ -1,4 +1,4 @@
-# WebsocketRailsClient++ (v0.7.4-NB)
+# WebsocketRailsClient++ (v0.7.5-NB)
 
 WebsocketRailsClient++ is a C++ library that uses the implementation of RFC6455 (The WebSocket Protocol)
 implemented in the WebSocket++ library, the Json++ light-weight JSON parser and the Boost library. It allows
